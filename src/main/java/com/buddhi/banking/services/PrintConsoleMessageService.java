@@ -12,19 +12,15 @@ public class PrintConsoleMessageService {
         System.out.println("Your balance is " + balance + ".");
     }
 
-    public void pay(String name, String amount) {
-        System.out.println("Transferred " + amount + " to " + name + ".");
+    public void transfer(String name, Double amount) {
+        System.out.println("Transferred " + amount + " to " + name+ ".");
     }
 
-    public void oweToUser(String oweToUserName, String amount) {
-        System.out.println("Owing " + amount + " to " + oweToUserName + ".");
+    public void oweToUser(String name, Double amount) {
+        System.out.println("Owing " + amount + " to " + name + ".");
     }
 
-    public void oweTransfer(String toUserName, Double amount) {
-        System.out.println("Transferred " + amount + " to " + toUserName + ".");
-    }
-
-    public void oweMoreToUser(String toUsername, Double amount) {
-        System.out.println("Owing " + amount + " to " + toUsername + ".");
+    public void owingFromUser(String name, Double amount) {
+        System.out.println("Owing " + amount + " from " + name + ".");
     }
 }

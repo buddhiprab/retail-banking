@@ -42,6 +42,7 @@ public class BankingApplication implements CommandLineRunner {
 				}
 			} catch (Exception e) {
 				System.out.println("error in command");
+				e.printStackTrace();
 			}
 		}
 	}
