@@ -21,6 +21,7 @@ public class BankingApplication implements CommandLineRunner {
 
 	@Override
 	public void run(String... args) throws Exception {
+		System.out.println("Started Application ...");
 		String loggedInUserName = "";
 		while (true){
 			try{
