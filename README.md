@@ -2,7 +2,7 @@
 
 Developed by: Buddhi Prabhath
 
-This application has been developed using below tech stack
+This application has been developed using
 
 * Java 8
 * Maven 3.5.2
@@ -12,7 +12,7 @@ This application has been developed using below tech stack
 
 #### How to run the program.
 
-Assuming JAVA_HOME environment variable already set to Java 8 sdk in your environment and you have maven installed.
+Assuming JAVA_HOME environment variable is already set to Java 8 sdk in your environment and you have maven installed.
 
 ###### 1. using IDE
 
@@ -21,7 +21,7 @@ Assuming JAVA_HOME environment variable already set to Java 8 sdk in your enviro
 - create a Spring Boot running config (Intellij IDEA will create automatically when import the sources)
 - click the run button to run the Application, it will start the CLI application
 
-###### 2. using maven commandline tool on linux, mac, windows
+###### 2. using maven command line tool on linux, mac, windows
 
 extract the zip file
 
@@ -57,7 +57,7 @@ You can access the H2 Embedded Database after starting the application
 
 http://localhost:8080/h2-console
 ```
-jdbc url:   jdbc:h2:mem:testd
+jdbc url:   jdbc:h2:mem:testdb
 user name:  sa
 password:   password
 ```
@@ -68,7 +68,12 @@ database is initialized using the schema.sql in resources directory
 
 Amount values assumed as double values to support 2 decimal places precision in the future.
 
-#### DB Column related info
+#### DB and Column related info
+
+##### Tables
+
+- User: to save users
+- Txn : to record transations
 
 ##### Transaction Types
 
