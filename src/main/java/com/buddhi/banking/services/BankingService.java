@@ -8,6 +8,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import javax.transaction.Transactional;
 import java.math.BigDecimal;
 import java.util.List;
 
@@ -21,7 +22,9 @@ public class BankingService {
     @Autowired
     PrintConsoleMessageService printConsoleMessageService;
 
+    @Transactional(rollbackOn = RuntimeException.class)
     public void login(String name) {
+        //Todo input parameter validations and throw validation exceptions
         User user = userRepository.findByName(name);
         Double balance = 0.0;
         if(user!=null){
@@ -43,7 +46,9 @@ public class BankingService {
         }
     }
 
+    @Transactional(rollbackOn = RuntimeException.class)
     public void topUp(String name, String amountVal) {
+        //Todo input parameter validations and throw validation exceptions
         Double amount = Double.valueOf(amountVal);
         User user = userRepository.findByName(name);
         //create credit txn
@@ -76,7 +81,9 @@ public class BankingService {
         }
     }
 
+    @Transactional(rollbackOn = RuntimeException.class)
     public void pay(String name, String amountVal, String toUserName) {
+        //Todo input parameter validations and throw validation exceptions
         Double amount = Double.valueOf(amountVal);
         User user = userRepository.findByName(name);
         User toUser = userRepository.findByName(toUserName);

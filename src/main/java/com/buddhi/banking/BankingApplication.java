@@ -5,6 +5,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.context.annotation.Profile;
 
 import java.util.Scanner;
 
@@ -41,7 +43,7 @@ public class BankingApplication implements CommandLineRunner {
 					System.out.println("command must be either 'login', 'topup' or 'pay'");
 				}
 			} catch (Exception e) {
-				System.out.println("error in command");
+				System.out.println("error occurred! " + e.getMessage());
 				e.printStackTrace();
 			}
 		}
