@@ -1,7 +1,10 @@
 package com.buddhi.banking.services;
 
+import com.buddhi.banking.enums.TransactionType;
+import com.buddhi.banking.models.Balance;
 import com.buddhi.banking.models.Txn;
 import com.buddhi.banking.models.User;
+import com.buddhi.banking.repository.BalanceRepository;
 import com.buddhi.banking.repository.TxnRepository;
 import com.buddhi.banking.repository.UserRepository;
 import lombok.extern.slf4j.Slf4j;
@@ -9,7 +12,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.transaction.Transactional;
-import java.math.BigDecimal;
 import java.util.List;
 
 @Slf4j
@@ -19,6 +21,8 @@ public class BankingService {
     UserRepository userRepository;
     @Autowired
     TxnRepository txnRepository;
+    @Autowired
+    BalanceRepository balanceRepository;
     @Autowired
     PrintConsoleMessageService printConsoleMessageService;
 
@@ -52,21 +56,21 @@ public class BankingService {
         Double amount = Double.valueOf(amountVal);
         User user = userRepository.findByName(name);
         //create credit txn
-        createTxn(user.getId(), "C", amount, null, null);
+        createTxn(user.getId(), TransactionType.CREDIT, amount, null, null);
         //check owe txn
         Txn oweTxn = getOweTxn(user.getId());
         if(oweTxn==null) {
             printConsoleMessageService.balance(getBalance(user.getId()));
         } else { // handle owe
             if(oweTxn.getAmount().compareTo(amount)>=0) { // owe >= amount
-                Txn debitTxn = createTxn(user.getId(), "D", amount, null, null);
+                Txn debitTxn = createTxn(user.getId(), TransactionType.DEBIT, amount, null, null);
                 setTxnId(debitTxn);
-                createTxn(oweTxn.getRefId(), "C", amount, debitTxn.getId(), null);
+                createTxn(oweTxn.getRefId(), TransactionType.CREDIT, amount, debitTxn.getId(), null);
                 userRepository.findById(oweTxn.getRefId()).ifPresent(toUser -> printConsoleMessageService.transfer(toUser.getName(), amount));
             } else {
-                Txn debitTxn = createTxn(user.getId(), "D", oweTxn.getAmount(), null, null);
+                Txn debitTxn = createTxn(user.getId(), TransactionType.DEBIT, oweTxn.getAmount(), null, null);
                 setTxnId(debitTxn);
-                createTxn(oweTxn.getRefId(), "C", oweTxn.getAmount(), debitTxn.getId(), null);
+                createTxn(oweTxn.getRefId(), TransactionType.CREDIT, oweTxn.getAmount(), debitTxn.getId(), null);
                 userRepository.findById(oweTxn.getRefId()).ifPresent(toUser -> printConsoleMessageService.transfer(toUser.getName(), oweTxn.getAmount()));
             }
             printConsoleMessageService.balance(getBalance(user.getId()));
@@ -75,7 +79,7 @@ public class BankingService {
             txnRepository.save(oweTxn);
             if(oweTxn.getAmount().compareTo(amount)>0) { // owe > amount
                 Double oweMoreAmount = oweTxn.getAmount()-amount;
-                Txn oweTxnForDifferenceAmount = createTxn(user.getId(), "O", oweMoreAmount, null, oweTxn.getRefId());
+                Txn oweTxnForDifferenceAmount = createTxn(user.getId(), TransactionType.OWE, oweMoreAmount, null, oweTxn.getRefId());
                 userRepository.findById(oweTxnForDifferenceAmount.getRefId()).ifPresent(oweMoreToUser -> printConsoleMessageService.oweToUser(oweMoreToUser.getName(), oweMoreAmount));
             }
         }
@@ -92,19 +96,19 @@ public class BankingService {
             Txn owingFromTxn = getOwingFromTxn(toUser.getId(), user.getId());
             if(owingFromTxn==null){
                 if(balance.compareTo(amount)>=0){
-                    Txn debitTxn = createTxn(user.getId(), "D", amount, null, null);
+                    Txn debitTxn = createTxn(user.getId(), TransactionType.DEBIT, amount, null, null);
                     setTxnId(debitTxn);
-                    createTxn(toUser.getId(), "C", amount, debitTxn.getId(), null);
+                    createTxn(toUser.getId(), TransactionType.CREDIT, amount, debitTxn.getId(), null);
                     printConsoleMessageService.transfer(toUser.getName(), amount);
                     printConsoleMessageService.balance(getBalance(user.getId()));
                 } else {
-                    Txn debitTxn = createTxn(user.getId(), "D", balance, null, null);
+                    Txn debitTxn = createTxn(user.getId(), TransactionType.DEBIT, balance, null, null);
                     setTxnId(debitTxn);
-                    createTxn(toUser.getId(), "C", balance, debitTxn.getId(), null);
+                    createTxn(toUser.getId(), TransactionType.CREDIT, balance, debitTxn.getId(), null);
                     printConsoleMessageService.transfer(toUser.getName(), balance);
                     printConsoleMessageService.balance(getBalance(user.getId()));
                     Double oweAmount = amount-balance;
-                    createTxn(user.getId(), "O", oweAmount, null, toUser.getId());
+                    createTxn(user.getId(), TransactionType.OWE, oweAmount, null, toUser.getId());
                     printConsoleMessageService.oweToUser(toUser.getName(), oweAmount);
                 }
             } else {
@@ -113,10 +117,10 @@ public class BankingService {
                 txnRepository.save(owingFromTxn);
                 if(owingFromTxn.getAmount().compareTo(amount)>0) {
                     Double oweMoreAmount = owingFromTxn.getAmount()-amount;
-                    createTxn(toUser.getId(), "O", oweMoreAmount, null, user.getId());
+                    createTxn(toUser.getId(), TransactionType.OWE, oweMoreAmount, null, user.getId());
                     printConsoleMessageService.owingFromUser(toUser.getName(), oweMoreAmount);
                 } else {
-                    createTxn(toUser.getId(), "C", amount-owingFromTxn.getAmount(), null, null);
+                    createTxn(toUser.getId(), TransactionType.CREDIT, amount-owingFromTxn.getAmount(), null, null);
                 }
                 printConsoleMessageService.balance(getBalance(user.getId()));
             }
@@ -126,14 +130,15 @@ public class BankingService {
     }
 
     private Double getBalance(Long userId) {
-        Double balance = txnRepository.getBalance(userId);
-        return balance==null ? 0.0 : balance;
+        Balance balance = balanceRepository.getBalanceByUserId(userId);
+        return balance==null ? 0.0 : balance.getBalance();
     }
 
-    private Txn createTxn(Long userId, String type, Double amount, Long txnId, Long refId) {
+    private Txn createTxn(Long userId, TransactionType type, Double amount, Long txnId, Long refId) {
+        updateBalance(userId, type, amount);
         Txn v = new Txn();
         v.setUserId(userId);
-        v.setType(type);
+        v.setType(type.name());
         v.setAmount(amount);
         if(txnId != null){
             v.setTxnId(txnId);
@@ -144,20 +149,38 @@ public class BankingService {
         return txnRepository.save(v);
     }
 
+    private void updateBalance(Long userId, TransactionType type, Double amount) {
+        if(TransactionType.CREDIT==type || TransactionType.DEBIT==type){
+            Balance b = balanceRepository.getBalanceByUserId(userId);
+            Double currentBalance = 0.0;
+            if(b!=null){
+                currentBalance = b.getBalance();
+            }
+            Balance balance = new Balance();
+            balance.setUserId(userId);
+            if(TransactionType.CREDIT==type) {
+                balance.setBalance(currentBalance + amount);
+            } if(TransactionType.DEBIT==type) {
+                balance.setBalance(currentBalance - amount);
+            }
+            balanceRepository.save(balance);
+        }
+    }
+
     private void setTxnId(Txn txn) {
         txn.setTxnId(txn.getId());
         txnRepository.save(txn);
     }
 
     private Txn getOweTxn(Long userId) {
-        return txnRepository.findByUserIdAndTypeAndStatus(userId, "O", null);
+        return txnRepository.findByUserIdAndTypeAndStatus(userId, TransactionType.OWE.name(), null);
     }
 
     private List<Txn> getOwingFromTxns(Long refId) {
-        return txnRepository.findByTypeAndRefIdAndStatus("O", refId, null);
+        return txnRepository.findByTypeAndRefIdAndStatus(TransactionType.OWE.name(), refId, null);
     }
 
     private Txn getOwingFromTxn(Long userId, Long refId) {
-        return txnRepository.findByUserIdAndTypeAndRefIdAndStatus(userId, "O", refId, null);
+        return txnRepository.findByUserIdAndTypeAndRefIdAndStatus(userId, TransactionType.OWE.name(), refId, null);
     }
 }

@@ -1,6 +1,7 @@
 package com.buddhi.banking;
 
 import com.buddhi.banking.models.User;
+import com.buddhi.banking.repository.BalanceRepository;
 import com.buddhi.banking.repository.TxnRepository;
 import com.buddhi.banking.repository.UserRepository;
 import com.buddhi.banking.services.BankingService;
@@ -27,6 +28,8 @@ class BankingServiceTests {
 	UserRepository userRepository;
 	@Autowired
 	TxnRepository txnRepository;
+	@Autowired
+	BalanceRepository balanceRepository;
 
 	private static ByteArrayOutputStream outContent;
 	private static User alice;

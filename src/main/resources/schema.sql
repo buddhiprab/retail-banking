@@ -13,9 +13,15 @@ create table if not exists bank.txn
     id               int auto_increment primary key,
     user_id          number(15) not null,
     amount           number(18, 2) not null,
-    type             varchar2(1) not null,
+    type             varchar2(5) not null,
     txn_id           number(15) not null,
     ref_id           number(15) not null,
     status           varchar2(1) not null,
     creation_time    timestamp default systimestamp
+);
+
+create table if not exists bank.balance
+(
+    user_id          number(15) primary key,
+    balance           number(18, 2) not null
 );
